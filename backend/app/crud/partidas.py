@@ -18,3 +18,8 @@ def create_partida(db: Session, partida: PartidaData):
     db.commit()
     db.flush()
     return new_partida
+
+def delete_partida(db: Session, id: int):
+    db.query(Partida).filter(Partida.id == id).delete()
+    db.commit()
+    
