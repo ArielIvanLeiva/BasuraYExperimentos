@@ -2,7 +2,6 @@ from database import Base
 from sqlalchemy import Column, Enum as SQLEnum, Integer, String, Boolean
 
 from mytypes import Privacidad
-from schemas.partidas import PartidaData, PartidaId
 
 class Partida(Base):
     __tablename__ = 'partidas'
