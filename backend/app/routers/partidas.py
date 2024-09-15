@@ -1,5 +1,13 @@
-from fastapi import APIRouter
-from fastapi import HTTPException, Depends
+from fastapi import (
+    APIRouter, 
+    HTTPException, 
+    Depends, 
+    WebSocket,
+    WebSocketDisconnect,
+    WebSocketException,
+    status
+)
+
 from sqlalchemy.orm import Session
 from http import HTTPStatus
 
@@ -7,6 +15,8 @@ import crud.partidas as crud
 from models.partidas import Base
 from database import engine, get_db
 from schemas.partidas import PartidaData, PartidaId
+from schemas.player import PlayerData, PlayerId
+from websocketsSetup.manager import ws_manager
 
 Base.metadata.create_all(bind=engine)
 
@@ -42,3 +52,15 @@ async def delete_partida(id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
     
     return partida_by_id
+
+@router.websocket('/{id:int}/jugadores/{nombre:str}')
+async def join_to_partida(websocket: WebSocket, id: int, nombre: str, db: Session = Depends(get_db)):
+    partida_by_id = crud.get_partida_by_id(db, id=id)
+
+    if not partida_by_id:
+        raise WebSocketException(code=status.WS_1013_TRY_AGAIN_LATER)
+    try:
+        await ws_manager.connect(1, websocket)
+        return crud.create_player(db, PlayerData(nombre=nombre, partida_id=id))
+    except WebSocketDisconnect:
+        ws_manager.disconnect(1)
