@@ -2,8 +2,8 @@ from fastapi import WebSocket
 
 class ConnectionManager:
     def __init__(self):
-        # Stores active connections sockets on ram, indexable by player id.
-        self.active_connections: dict[int, WebSocket] = {}
+        # Stores active connections sockets on ram, indexable by (partida id, player id).
+        self.active_connections: dict[(int, int), WebSocket] = {}
         
     async def connect(self, player_id: int, websocket: WebSocket):
         await websocket.accept()

@@ -53,14 +53,16 @@ async def delete_partida(id: int, db: Session = Depends(get_db)):
     
     return partida_by_id
 
-@router.websocket('/{id:int}/jugadores/{nombre:str}')
-async def join_to_partida(websocket: WebSocket, id: int, nombre: str, db: Session = Depends(get_db)):
-    partida_by_id = crud.get_partida_by_id(db, id=id)
+@router.websocket('/{partida_id:int}/jugadores/{nombre:str}')
+async def join_to_partida(websocket: WebSocket, partida_id: int, nombre: str, db: Session = Depends(get_db)):
+    partida_by_id = crud.get_partida_by_id(db, id=partida_id)
 
     if not partida_by_id:
         raise WebSocketException(code=status.WS_1013_TRY_AGAIN_LATER)
     try:
-        await ws_manager.connect(1, websocket)
-        return crud.create_player(db, PlayerData(nombre=nombre, partida_id=id))
+        player = crud.create_player(db, PlayerData(nombre=nombre, partida_id=partida_id))
+        # WARNING: If we leave it like this, then a disconnection could produce "dangling players" (if we don't give a medium for reconnecting)
+        await ws_manager.connect((player.partida_id, player.id), websocket)
+        return player
     except WebSocketDisconnect:
-        ws_manager.disconnect(1)
+        ws_manager.disconnect(player.id)
