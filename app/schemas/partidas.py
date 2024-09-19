@@ -1,8 +1,11 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class PartidaData(BaseModel):
-    nombre: str
-    iniciada: bool
+    nombre_partida: str
+    min_jugadores: Optional[int] = None
+    max_jugadores: Optional[int] = None
 
-class PartidaId(PartidaData):
+class PartidaCreada(PartidaData):
+    iniciada: bool
     id: int
